@@ -1,0 +1,6 @@
+package multihash
+
+modules = Data.Digest, Data.UVarint
+
+
+libs = bytes, contrib
