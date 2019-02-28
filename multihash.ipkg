@@ -2,5 +2,6 @@ package multihash
 
 modules = Data.Digest, Data.UVarint
 
+tests = Test.Multihash.tests
 
 libs = bytes, contrib
