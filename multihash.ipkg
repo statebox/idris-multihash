@@ -1,7 +1,7 @@
-package multihash
+package idris-multihash
 
-modules = Data.Digest, Data.UVarint
+modules = Data.Multihash, Data.UVarint
 
 tests = Test.Multihash.tests
 
-libs = bytes, contrib
+pkgs = bytes

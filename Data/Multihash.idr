@@ -1,4 +1,4 @@
-module Data.Digest
+module Data.Multihash
 
 import Data.UVarint
 import Data.Bytes
@@ -10,8 +10,13 @@ Digest = Bytes
 
 %access export
 
+||| Errors when decoding multihash
 public export
-data MultihashError = CodeNotFound | ParseError
+data MultihashError = 
+  ||| Code for multihash isn't in HashAlgorithm
+  CodeNotFound |
+  ||| The format is wrong
+  ParseError
 
 Show MultihashError where
   show CodeNotFound = "Unknown code for hash algorithm"
@@ -32,7 +37,6 @@ data HashAlgorithm
   | BLAKE2B
   | BLAKE2S
 
-export
 Show HashAlgorithm where
   show SHA1    = "SHA1"
   show SHA256  = "SHA256"
@@ -51,6 +55,7 @@ Eq HashAlgorithm where
   BLAKE2S == BLAKE2S = True
   _ == _ = False
 
+private
 fromCode : Int -> Either MultihashError HashAlgorithm
 fromCode 0x11 = pure SHA1
 fromCode 0x12 = pure SHA256
@@ -60,6 +65,7 @@ fromCode 0x40 = pure BLAKE2B
 fromCode 0x41 = pure BLAKE2S
 fromCode _    = Left CodeNotFound
 
+private
 toCode : HashAlgorithm -> Int
 toCode SHA1    = 0x11
 toCode SHA256  = 0x12
@@ -68,14 +74,23 @@ toCode SHA3    = 0x14
 toCode BLAKE2B = 0x40
 toCode BLAKE2S = 0x41
 
-export
+private
+length : Digest -> Int
+length d = (toIntNat $ length d) * 2
+
+private
+overrideError : Either a b -> Either MultihashError b
+overrideError (Left l) = Left ParseError
+overrideError (Right r) = Right r
+
+||| Multihash datatype containing the algorithm used, the length of the digest
+||| and the Digest itself
 record Multihash where
   constructor MkMultihash
   hashFn : HashAlgorithm
   hashLength : Int
   digest : Digest 
 
-export
 Show Multihash where
   show (MkMultihash hashFn hashLength digest) = "Multihash(" ++ show hashFn 
     ++ ", " ++ show hashLength
@@ -88,18 +103,12 @@ Eq Multihash where
     hashLengthl == hashLengthr &&
     digestl == digestr
 
-private
-length : Digest -> Int
-length d = (toIntNat $ length d) * 2
 
+||| Encode a digest along with the hash algorithm that was used
 encode : HashAlgorithm -> Digest -> Multihash
-encode h d = MkMultihash h (Digest.length d) d
+encode h d = MkMultihash h (Multihash.length d) d
 
-overrideError : Either a b -> Either MultihashError b
-overrideError (Left l) = Left ParseError
-overrideError (Right r) = Right r
-
-export
+||| Attempts to decode raw bytes into a multihash
 decode : Bytes -> Either MultihashError Multihash
 decode bs = do (code, leftover) <- overrideError $ parseUVarint bs
                algo <- fromCode code
