@@ -85,32 +85,35 @@ overrideError (Right r) = Right r
 
 ||| Multihash datatype containing the algorithm used, the length of the digest
 ||| and the Digest itself
-record Multihash where
+record Multihash ty where
   constructor MkMultihash
   hashFn : HashAlgorithm
   hashLength : Int
-  digest : Digest 
+  digest : ty 
 
-Show Multihash where
+implementation Show ty => Show (Multihash ty) where
   show (MkMultihash hashFn hashLength digest) = "Multihash(" ++ show hashFn 
     ++ ", " ++ show hashLength
     ++ ", " ++ show digest
     ++ ")"
 
-Eq Multihash where
+implementation Prelude.Interfaces.Eq ty => Eq (Multihash ty) where
   (MkMultihash hashFnl hashLengthl digestl) == (MkMultihash hashFnr hashLengthr digestr) = 
     hashFnl == hashFnr &&
     hashLengthl == hashLengthr &&
     digestl == digestr
 
+public export
+interface IMultihash hash where
+  ||| Encode a digest along with the hash algorithm that was used
+  decode : hash -> Either MultihashError (Multihash hash)
+  ||| Attempts to decode raw bytes into a multihash
+  encode : HashAlgorithm -> hash -> Multihash hash
 
-||| Encode a digest along with the hash algorithm that was used
-encode : HashAlgorithm -> Digest -> Multihash
-encode h d = MkMultihash h (Multihash.length d) d
+IMultihash Bytes where
+  encode h d = MkMultihash h (Multihash.length d) d
 
-||| Attempts to decode raw bytes into a multihash
-decode : Bytes -> Either MultihashError Multihash
-decode bs = do (code, leftover) <- overrideError $ parseUVarint bs
-               algo <- fromCode code
-               (len, bytes) <- overrideError $ parseUVarint leftover
-               pure $ MkMultihash algo len (takePrefix len bytes)
+  decode bs = do (code, leftover) <- overrideError $ parseUVarint bs
+                 algo <- fromCode code
+                 (len, bytes) <- overrideError $ parseUVarint leftover
+                 pure $ MkMultihash algo len (takePrefix len bytes)
