@@ -1,7 +1,7 @@
 
 module Test.Multihash
 
-import Data.Digest
+import Data.Multihash
 import Data.Bytes
 import Data.ByteArray
 import Specdris.Spec
