@@ -91,6 +91,9 @@ record Multihash ty where
   hashLength : Int
   digest : ty 
 
+implementation Functor Multihash where
+  map f (MkMultihash hash len d) = MkMultihash hash len (f d)
+
 implementation Show ty => Show (Multihash ty) where
   show (MkMultihash hashFn hashLength digest) = "Multihash(" ++ show hashFn 
     ++ ", " ++ show hashLength
@@ -110,7 +113,7 @@ interface IMultihash hash where
   ||| Attempts to decode raw bytes into a multihash
   encode : HashAlgorithm -> hash -> Multihash hash
 
-IMultihash Bytes where
+implementation [multihashBytes] IMultihash Bytes where
   encode h d = MkMultihash h (Multihash.length d) d
 
   decode bs = do (code, leftover) <- overrideError $ parseUVarint bs
