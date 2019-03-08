@@ -113,7 +113,8 @@ interface IMultihash hash where
   ||| Attempts to decode raw bytes into a multihash
   encode : HashAlgorithm -> hash -> Multihash hash
 
-implementation [multihashBytes] IMultihash Bytes where
+public export
+implementation IMultihash Bytes where
   encode h d = MkMultihash h (Multihash.length d) d
 
   decode bs = do (code, leftover) <- overrideError $ parseUVarint bs
