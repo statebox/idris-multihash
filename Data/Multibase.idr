@@ -33,7 +33,7 @@ data MultibaseError = UnknownBase | IllegalSymbolFound | DigestEmpty
 ||| The Nat representation is used to parse the symbol as a digit in 
 ||| any arbitrary base
 public export interface ParsableSymbol a where
-   symbolToNat : a -> Nat
+   symbolToNat : a -> Either MultibaseError Nat
    parseBase : a -> Either MultibaseError (n ** BaseSymbol n)
 
 ||| Given a base and a vector of nat check if any nat go out of bound of the specified base
@@ -45,8 +45,8 @@ parseDigest b (x :: xs) {n = n} = do fin <- maybe (Left IllegalSymbolFound) Righ
 
 ||| Given a base and a vector of symbols check if all symbols are correctly encoded in the base
 parse : ParsableSymbol sym => (b : BaseSymbol n) -> Vect l sym -> Either MultibaseError (MultibaseDigest l n)
-parse b digest = let symbols = map symbolToNat digest in
-                     parseDigest b symbols
+parse b digest = do symbols <- traverse symbolToNat digest
+                    parseDigest b symbols
 
 ||| Given a list of parsable symbols return the digest indexed by its length and base number
 parseSymbols : ParsableSymbol s => List s -> Either MultibaseError (l ** b ** (MultibaseDigest l b))
