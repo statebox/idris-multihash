@@ -5,17 +5,17 @@ import Data.Multibase
 
 %default total
 
-parseBaseChar : Char -> Either MultibaseError (n ** (BaseSymbol n))
-parseBaseChar '1' = Right (0 ** SBase1)
-parseBaseChar '0' = Right (1 ** SBase2)
-parseBaseChar '7' = Right (7 ** SBase8)
-parseBaseChar '9' = Right (9 ** SBase10)
-parseBaseChar 'b' = Right (15 ** SBase16)
-parseBaseChar 'z' = Right (57 ** SBase58btc)
-parseBaseChar 'm' = Right (63 ** SBase64)
-parseBaseChar _   = Left UnknownBase
+parseBaseChar : Char -> Either (MultibaseError Char) (n ** (BaseSymbol n))
+parseBaseChar '1' = Right (1 ** SBase1)
+parseBaseChar '0' = Right (2 ** SBase2)
+parseBaseChar '7' = Right (8 ** SBase8)
+parseBaseChar '9' = Right (10 ** SBase10)
+parseBaseChar 'b' = Right (16 ** SBase16)
+parseBaseChar 'z' = Right (58 ** SBase58btc)
+parseBaseChar 'm' = Right (64 ** SBase64)
+parseBaseChar c   = Left (UnknownBase c)
 
-charToNat : Char -> Either MultibaseError Nat
+charToNat : Char -> Either (MultibaseError Char) Nat
 charToNat '0' = Right 0
 charToNat '1' = Right 1
 charToNat '2' = Right 2
@@ -52,7 +52,7 @@ charToNat 'w' = Right 22
 charToNat 'x' = Right 23
 charToNat 'y' = Right 24
 charToNat 'z' = Right 25
-charToNat _   = Left IllegalSymbolFound
+charToNat s   = Left (IllegalSymbolFound s)
 
 public export
 ParsableSymbol Char where
