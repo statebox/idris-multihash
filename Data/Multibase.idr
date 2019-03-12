@@ -39,18 +39,20 @@ Eq (BaseSymbol n) where
   SBase58btc == SBase58btc = True
   SBase64    == SBase64    = True
   _ == _ = False
-  
-public export
-record MultibaseDigest (length : Nat) (n : Nat) where
+
+||| Record that holds the digest and the meta-data about it
+||| It is indexed by the length of the digest and the size of the base.
+||| This representation is agnostic from the original encoding, that is
+||| there could be multiple encodings that represent 64bits bases but
+||| they will have the same `MultibaseDigest`
+public export record MultibaseDigest (length : Nat) (n : Nat) where
   constructor MkMultibaseDigest
   base : BaseSymbol n
   digest : Vect length (Fin n)
 
-implementation (DecEq a, {y : a} -> Eq (p y)) => Eq (DPair a p) where
-  (x ** pf) == (y ** pf') with (decEq x y) 
-    (x ** pf) == (x ** pf') | Yes Refl = pf == pf'
-    (x ** pf) == (y ** pf') | No contra = False
-  _ == _ = False
+||| This probably should be in STD-lib
+implementation (Eq a, {y : a} -> Eq (p y)) => Eq (DPair a p) where
+  lhs == rhs = (fst lhs == fst rhs) && (snd rhs == snd rhs)
 
 Eq (MultibaseDigest l b) where
   (MkMultibaseDigest b1 d1) == (MkMultibaseDigest b2 d2) = b1 == b2 && d1 == d2

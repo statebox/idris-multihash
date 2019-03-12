@@ -54,8 +54,7 @@ charToNat 'y' = Right 24
 charToNat 'z' = Right 25
 charToNat s   = Left (IllegalSymbolFound s)
 
-public export
-ParsableSymbol Char where
+public export ParsableSymbol Char where
   symbolToNat = charToNat . toLower
   parseBase = parseBaseChar
 
