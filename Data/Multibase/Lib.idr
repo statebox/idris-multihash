@@ -17,6 +17,16 @@ data BaseSymbol : Nat -> Type where
   SBase58btc : BaseSymbol 58
   SBase64    : BaseSymbol 64
 
+Uninhabited (BaseSymbol Z) where
+  uninhabited SBase1 impossible
+  uninhabited SBase2 impossible
+  uninhabited SBase8 impossible
+  uninhabited SBase10 impossible
+  uninhabited SBase16 impossible
+  uninhabited SBase32 impossible
+  uninhabited SBase58btc impossible
+  uninhabited SBase64 impossible
+
 Show (BaseSymbol n) where
   show SBase1     = "1"
   show SBase2     = "binary"
@@ -39,14 +49,19 @@ Eq (BaseSymbol n) where
   _ == _ = False
 
 dictionary : BaseSymbol b -> Vect b Char
-dictionary SBase1 = fromList $ unpack "0"
-dictionary SBase2 = fromList $ unpack "01"
-dictionary SBase8 = fromList $ unpack "01234567"
-dictionary SBase10 = fromList $ unpack "0123456789"
-dictionary SBase16 = fromList $ unpack "0123456789abcdef"
-dictionary SBase32 = fromList $ unpack "0123456789abcdefghijklmnopqrstuv"
+dictionary SBase1     = fromList $ unpack "0"
+dictionary SBase2     = fromList $ unpack "01"
+dictionary SBase8     = fromList $ unpack "01234567"
+dictionary SBase10    = fromList $ unpack "0123456789"
+dictionary SBase16    = fromList $ unpack "0123456789abcdef"
+dictionary SBase32    = fromList $ unpack "0123456789abcdefghijklmnopqrstuv"
 dictionary SBase58btc = fromList $ unpack "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-dictionary SBase64 = fromList $ unpack "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+dictionary SBase64    = fromList $ unpack "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+toString : BaseSymbol b -> List (Fin b) -> String
+toString base vals = pack $ map (decodeChar base) vals
+  where decodeChar : BaseSymbol b -> Fin b -> Char
+        decodeChar base val = index val $ dictionary base
 
 ||| Record that holds the digest and the meta-data about it
 ||| It is indexed by the length of the digest and the size of the base.
@@ -55,7 +70,7 @@ dictionary SBase64 = fromList $ unpack "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
 ||| they will have the same `MultibaseDigest`
 public export record MultibaseDigest (length : Nat) (n : Nat) where
   constructor MkMultibaseDigest
-  base : BaseSymbol n
+  base   : BaseSymbol n
   digest : Vect length (Fin n)
 
 ||| This probably should be in STD-lib
@@ -63,8 +78,6 @@ implementation (DecEq a, {y : a} -> Eq (p y)) => Eq (DPair a p) where
    (x ** pf) == (y ** pf') with (decEq x y)
      (x ** pf) == (x ** pf') | Yes Refl = pf == pf'
      (x ** pf) == (y ** pf') | No contra = False
-
-
 
 Eq (MultibaseDigest l b) where
   (MkMultibaseDigest b1 d1) == (MkMultibaseDigest b2 d2) = b1 == b2 && d1 == d2
@@ -74,7 +87,6 @@ Show (Fin b) where
 
 Show (MultibaseDigest l b) where
   show (MkMultibaseDigest base digest) = show base ++ ":" ++ show digest
-
 
 public export
 data MultibaseError char = UnknownBase char 
@@ -140,8 +152,3 @@ public export ParsableSymbol Char where
                               maybe (Left (IllegalSymbolFound char)) (Right . finToNat) index
   parseBase = parseBaseChar
 
-
-writeString : String -> List Bits8
-
-encodeBits : List Bits8 -> BaseSymbol n -> (l ** MultibaseDigest l n)
-encodeBits xs x = ?encodeBits_rhs

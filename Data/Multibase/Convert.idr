@@ -31,29 +31,27 @@ natLteFin lte Z {f = f} = FZ
 natLteFin (LTESucc lte) (S k) {f = f} = rewrite lteEqPlus lte in mkFin
 
 ||| Convert a natural number into the selected base (actually the predecessor of the base). The output
-||| is a list of natural numbers smaller than the base which acts as an upper bound
+||| is a list of natural numbers smaller than the base which acts as an upper bound. LSB
 convertBaseList : (predBase : Nat) -> Nat -> List (Fin (S predBase)) -> List (Fin (S predBase))
 convertBaseList predBase num acc with (num `divMod` predBase)
   convertBaseList predBase (remainder + (    Z * (S predBase))) acc | (MkDivMod     Z remainder remainderSmall) = 
-    reverse ((natLteFin remainderSmall remainder) :: acc)
+    (natLteFin remainderSmall remainder) :: acc
   convertBaseList predBase (remainder + ((S q) * (S predBase))) acc | (MkDivMod (S q) remainder remainderSmall) = 
     -- This assert_total is a bit frustrating, we can see that  q is smaller than r + q * b but idris can't figure it out
     assert_total $ convertBaseList predBase (S q) ((natLteFin remainderSmall remainder) :: acc)
 
+padWithZero : Nat -> List (Fin (S n)) -> List (Fin (S n))
+padWithZero k xs with (k `minus` length xs)
+  | Z = xs
+  | (S n) = replicate (S n) FZ ++ xs
 
-base256ToBase : (predBase : Nat) -> List Nat -> List (Fin (S predBase))
-base256ToBase predBase xs = xs >>= (\char => convertBaseList predBase char [])
-
-partial
-convertBase : (base : Nat) -> (num : Nat) -> List Nat
-convertBase base num = ?converbasehole -- convertBaseList base num []
+||| Nats represent values in unary base
+unaryToBase : (predBase : Nat) -> Nat -> List Nat -> List (Fin (S predBase))
+unaryToBase predBase padding xs = xs >>= (\char => padWithZero padding (convertBaseList predBase char []))
 
 ||| Convert a string into a list of Nat each representing a number between 0 and 255
 stringToBase256 : String -> List Nat
 stringToBase256 x = map PE_toNat_abb9c3f3 $ unpack x
-
-stringToBase : (predBase : Nat) -> String -> List (Fin (S predBase))
-stringToBase predBase = base256ToBase predBase . stringToBase256
 
 ||| This in effect, transforms a list of numbers in a base into a unary base (Nat)
 listBaseToNat : List (Fin base) -> Nat
@@ -63,3 +61,4 @@ listBaseToNat ls = listBaseToNatHelper ls 0 0
     listBaseToNatHelper [] index acc = acc
     listBaseToNatHelper (y :: xs) index acc {base} = 
       listBaseToNatHelper xs (S index) (acc + ((finToNat y) * (base `power` index)))
+
