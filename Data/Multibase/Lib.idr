@@ -68,10 +68,10 @@ toString base vals = pack $ map (decodeChar base) vals
 ||| This representation is agnostic from the original encoding, that is
 ||| there could be multiple encodings that represent 64bits bases but
 ||| they will have the same `MultibaseDigest`
-public export record MultibaseDigest (length : Nat) (n : Nat) where
+public export record MultibaseDigest (n : Nat) where
   constructor MkMultibaseDigest
   base   : BaseSymbol n
-  digest : Vect length (Fin n)
+  digest : List (Fin n)
 
 ||| This probably should be in STD-lib
 implementation (DecEq a, {y : a} -> Eq (p y)) => Eq (DPair a p) where
@@ -79,13 +79,13 @@ implementation (DecEq a, {y : a} -> Eq (p y)) => Eq (DPair a p) where
      (x ** pf) == (x ** pf') | Yes Refl = pf == pf'
      (x ** pf) == (y ** pf') | No contra = False
 
-Eq (MultibaseDigest l b) where
+Eq (MultibaseDigest b) where
   (MkMultibaseDigest b1 d1) == (MkMultibaseDigest b2 d2) = b1 == b2 && d1 == d2
 
 Show (Fin b) where
   show = show . finToInteger
 
-Show (MultibaseDigest l b) where
+Show (MultibaseDigest b) where
   show (MkMultibaseDigest base digest) = show base ++ ":" ++ show digest
 
 public export
@@ -115,33 +115,34 @@ public export interface ParsableSymbol a where
    parseBase : a -> Either (MultibaseError a) (n ** BaseSymbol n)
 
 ||| Given a base and a vector of nat check if any nat go out of bound of the specified base
-parseDigest : (b : BaseSymbol n) -> Vect l Nat -> Either (MultibaseError a) (MultibaseDigest l n)
+parseDigest : (b : BaseSymbol n) -> Vect l Nat -> Either (MultibaseError a) (MultibaseDigest n)
 parseDigest b [] {n = n} = Right (MkMultibaseDigest b [])
 parseDigest b (x :: xs) {n = n} = do fin <- maybe (Left (OutOfRangeSymbol x)) Right $ natToFin x n
                                      MkMultibaseDigest b fs <- parseDigest b xs
                                      pure (MkMultibaseDigest b (fin :: fs))
 
 ||| Given a base and a vector of symbols check if all symbols are correctly encoded in the base
-parse : ParsableSymbol sym => (b : BaseSymbol n) -> Vect l sym -> Either (MultibaseError sym) (MultibaseDigest l n)
+parse : ParsableSymbol sym => (b : BaseSymbol n) -> Vect l sym -> Either (MultibaseError sym) (MultibaseDigest n)
 parse b digest = do symbols <- traverse (symbolToNat b) digest
                     parseDigest b symbols
 
 ||| Given a list of parsable symbols return the digest indexed by its length and base number
-parseSymbols : ParsableSymbol s => List s -> Either (MultibaseError s) (l ** b ** (MultibaseDigest l b))
+parseSymbols : ParsableSymbol s => List s -> Either (MultibaseError s) (b ** (MultibaseDigest b))
 parseSymbols [] = Left DigestEmpty
 parseSymbols (x :: xs) with (parseBase x) 
   | (Left y) = Left y
   | (Right (n ** base)) = let vect = fromList xs in
                               case parse base vect of
                                    Left err => Left err
-                                   Right parsed => Right ((length xs) ** n ** parsed)
+                                   Right parsed => Right (n ** parsed)
 
 parseBaseChar : Char -> Either (MultibaseError Char) (n ** (BaseSymbol n))
 parseBaseChar '1' = Right (1 ** SBase1)
 parseBaseChar '0' = Right (2 ** SBase2)
 parseBaseChar '7' = Right (8 ** SBase8)
 parseBaseChar '9' = Right (10 ** SBase10)
-parseBaseChar 'b' = Right (16 ** SBase16)
+parseBaseChar 'f' = Right (16 ** SBase16)
+parseBaseChar 'b' = Right (32 ** SBase32)
 parseBaseChar 'z' = Right (58 ** SBase58btc)
 parseBaseChar 'm' = Right (64 ** SBase64)
 parseBaseChar c   = Left (UnknownBase c)
