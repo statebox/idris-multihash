@@ -36,7 +36,7 @@ The `Data.Multihash` import gives you access to the Multihash error type and to 
 ## Bytes dependency
 
 Since Multihash depends on bytes you might want to use it as well. Head to [idris-bytes](BYTEs)
-library in order to get more info. As as quick start here is what you can do:
+library in order to get more info. To summarize:
 
 - Clone the idris-bytes project
 - Install it
