@@ -18,7 +18,7 @@ $ idris --install multihash.ipkg
 
 ## How to use
 
-Import in you project with
+Import in your project with
 
 ```
 import Data.Multihash
