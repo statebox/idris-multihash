@@ -23,7 +23,7 @@ tests = spec $ do
     it "should parse real sha" $
       let body = empty |> 0xcf |> 0x83 |> 0xe1 |> 0x35 |> 0x7e |> 0xef |> 0xb8 |> 0xbd |> 0xf1 |> 0x54 in
       decode ((empty |> 0x13 |> 0x0a) ++ body) `shouldBe` Right (MkMultihash SHA512 10 body)
-  describe "Parsin Strings" $ do
+  describe "Parsing Strings" $ do
     it "should parse empty digest" $
       decode "1100" `shouldBe` Right (MkMultihash SHA1 0 "")
     it "should parse non-empty digest" $
