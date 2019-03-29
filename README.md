@@ -1,6 +1,6 @@
 # Idris-multihash
 
-Multihash implementation for Idris. It depends on the [idris-bytes](BYTES) library
+Multihash implementation for Idris. It depends on the [idris-bytes](https://github.com/ziman/idris-bytes) library
 
 ## How to install
 
